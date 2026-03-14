@@ -2,49 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Calculator</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
         :root { --bg: #000; --accent: #00a884; --text: #e9edef; --gray: #202c33; --btn-gray: #333; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; outline: none; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden; }
 
-        /* --- CALCULATOR: CENTERED & RESPONSIVE --- */
-        #calc-wrapper { height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        #calc { width: 100%; max-width: 400px; display: flex; flex-direction: column; }
-        #display { font-size: 60px; text-align: right; padding: 20px; min-height: 100px; display: flex; align-items: flex-end; justify-content: flex-end; word-break: break-all; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .btn { aspect-ratio: 1/1; border-radius: 50%; border: none; font-size: 24px; background: var(--btn-gray); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn:active { background: #555; }
+        /* --- CALCULATOR: PERFECT CENTER --- */
+        #calc-wrapper { height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 15px; }
+        #calc { width: 100%; max-width: 380px; display: flex; flex-direction: column; }
+        #display { font-size: clamp(40px, 15vw, 70px); text-align: right; padding: 10px 20px; min-height: 120px; display: flex; align-items: flex-end; justify-content: flex-end; word-break: break-all; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .btn { aspect-ratio: 1/1; border-radius: 50%; border: none; font-size: 24px; background: var(--btn-gray); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.1s; }
+        .btn:active { opacity: 0.7; }
         .btn.op { background: #ff9f0a; }
         .btn.action { background: #a5a5a5; color: black; }
         .btn.zero { grid-column: span 2; aspect-ratio: auto; height: 100%; border-radius: 50px; justify-content: flex-start; padding-left: 25px; }
 
-        /* --- CHAT UI: COMPATIBLE ALL PHONES --- */
-        #vault { display: none; height: 100vh; flex-direction: column; background: #0b141a; }
-        header { height: 60px; padding: 0 15px; background: var(--gray); display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-        #chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        /* --- CHAT VAULT: FULLY RESPONSIVE --- */
+        #vault { display: none; height: 100dvh; flex-direction: column; background: #0b141a; position: relative; }
+        header { height: 60px; padding: 0 15px; background: var(--gray); display: flex; align-items: center; justify-content: space-between; z-index: 10; border-bottom: 1px solid #333; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
         
-        .msg { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 15px; line-height: 1.4; position: relative; }
+        .msg { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 15px; line-height: 1.4; box-shadow: 0 1px 1px rgba(0,0,0,0.2); }
         .sent { align-self: flex-end; background: #005c4b; border-bottom-right-radius: 2px; }
         .received { align-self: flex-start; background: var(--gray); border-bottom-left-radius: 2px; }
-        .timer-icon { font-size: 10px; color: #ffbc00; margin-right: 5px; }
-        .meta { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; display: flex; justify-content: space-between; }
+        .meta { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; display: flex; justify-content: space-between; gap: 10px; }
 
-        /* --- CONTROLS AREA --- */
-        #controls { padding: 10px; background: var(--gray); border-top: 1px solid #333; }
-        .options-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 5px; }
-        .toggle-container { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8696a0; }
+        /* --- FIXED INPUT AREA --- */
+        #controls { background: var(--gray); padding: 10px 15px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid #333; }
+        .options-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .toggle-container { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8696a0; cursor: pointer; }
         
         .input-row { display: flex; align-items: center; gap: 10px; }
-        #msgInput { flex: 1; background: #2a3942; border: none; padding: 12px 18px; border-radius: 25px; color: white; font-size: 16px; }
-        .send-btn { background: var(--accent); border: none; width: 45px; height: 45px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; }
+        #msgInput { flex: 1; background: #2a3942; border: none; padding: 12px 18px; border-radius: 25px; color: white; font-size: 16px; min-width: 0; }
+        .send-btn { background: var(--accent); border: none; min-width: 46px; height: 46px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-        /* --- ADMIN PANEL --- */
+        /* --- ADMIN --- */
         #admin { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; overflow-y: auto; }
-        .user-card { background: #1c1c1c; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .user-card { background: #1c1c1c; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -53,25 +52,11 @@
         <div id="calc">
             <div id="display">0</div>
             <div class="grid">
-                <button class="btn action" onclick="p('C')">AC</button>
-                <button class="btn action" onclick="p('DEL')">⌫</button>
-                <button class="btn action" onclick="p('%')">%</button>
-                <button class="btn op" onclick="p('/')">÷</button>
-                <button class="btn" onclick="p('7')">7</button>
-                <button class="btn" onclick="p('8')">8</button>
-                <button class="btn" onclick="p('9')">9</button>
-                <button class="btn op" onclick="p('*')">×</button>
-                <button class="btn" onclick="p('4')">4</button>
-                <button class="btn" onclick="p('5')">5</button>
-                <button class="btn" onclick="p('6')">6</button>
-                <button class="btn op" onclick="p('-')">−</button>
-                <button class="btn" onclick="p('1')">1</button>
-                <button class="btn" onclick="p('2')">2</button>
-                <button class="btn" onclick="p('3')">3</button>
-                <button class="btn op" onclick="p('+')">+</button>
-                <button class="btn zero" onclick="p('0')">0</button>
-                <button class="btn" onclick="p('.')">.</button>
-                <button class="btn op" onclick="p('=')">=</button>
+                <button class="btn action" onclick="p('C')">AC</button><button class="btn action" onclick="p('DEL')">⌫</button><button class="btn action" onclick="p('%')">%</button><button class="btn op" onclick="p('/')">÷</button>
+                <button class="btn" onclick="p('7')">7</button><button class="btn" onclick="p('8')">8</button><button class="btn" onclick="p('9')">9</button><button class="btn op" onclick="p('*')">×</button>
+                <button class="btn" onclick="p('4')">4</button><button class="btn" onclick="p('5')">5</button><button class="btn" onclick="p('6')">6</button><button class="btn op" onclick="p('-')">−</button>
+                <button class="btn" onclick="p('1')">1</button><button class="btn" onclick="p('2')">2</button><button class="btn" onclick="p('3')">3</button><button class="btn op" onclick="p('+')">+</button>
+                <button class="btn zero" onclick="p('0')">0</button><button class="btn" onclick="p('.')">.</button><button class="btn op" onclick="p('=')">=</button>
             </div>
         </div>
     </div>
@@ -86,14 +71,13 @@
         <div id="chat-box"></div>
         <div id="controls">
             <div class="options-bar">
-                <div class="toggle-container">
-                    <input type="checkbox" id="sd-toggle" style="width:18px; height:18px; accent-color:var(--accent);">
+                <label class="toggle-container">
+                    <input type="checkbox" id="sd-toggle" style="width:16px; height:16px; accent-color:var(--accent);">
                     <span>Auto-Delete (60s)</span>
-                </div>
-                <span style="font-size:10px; color:#555;">v2.0 Stable</span>
+                </label>
             </div>
             <div class="input-row">
-                <input type="text" id="msgInput" placeholder="Secret message..." autocomplete="off">
+                <input type="text" id="msgInput" placeholder="Message..." autocomplete="off">
                 <button class="send-btn" onclick="send()">➤</button>
             </div>
         </div>
@@ -104,6 +88,8 @@
         <div id="user-list"></div>
         <button onclick="document.getElementById('admin').style.display='none'" style="width:100%; padding:15px; background:var(--accent); color:white; border:none; border-radius:12px; margin-top:20px; font-weight:bold;">BACK TO CHAT</button>
     </div>
+
+    <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3"></audio>
 
 <script>
     const firebaseConfig = {
@@ -119,9 +105,13 @@
     const db = firebase.database();
 
     let cur = "";
+    let firstLoad = true;
     let myDev = navigator.userAgent.includes("Android") ? navigator.userAgent.split(';')[2].split(')')[0].trim() : "Desktop";
 
+    function vibrate() { if (navigator.vibrate) navigator.vibrate(20); }
+
     function p(v) {
+        vibrate();
         const d = document.getElementById('display');
         if(v==='='){
             if(cur === "20022026") unlock();
@@ -138,6 +128,7 @@
     }
 
     function send() {
+        vibrate();
         const inp = document.getElementById('msgInput');
         const sd = document.getElementById('sd-toggle').checked;
         if(!inp.value.trim()) return;
@@ -154,21 +145,25 @@
     function load() {
         db.ref('chats').on('value', (s) => {
             const box = document.getElementById('chat-box');
+            const wasAtBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 50;
             box.innerHTML = "";
             const now = Date.now();
+
             s.forEach(child => {
                 const d = child.val();
                 if (d.sd && (now - d.ts) > 60000) { db.ref('chats/'+child.key).remove(); return; }
                 const div = document.createElement('div');
                 div.className = `msg ${d.dev === myDev ? 'sent' : 'received'}`;
-                div.innerHTML = `
-                    ${d.sd ? '<span class="timer-icon">⏱</span>' : ''}
-                    ${d.text}
-                    <div class="meta"><span>${d.dev}</span> <span>${d.time}</span></div>
-                `;
-                div.ondblclick = () => { if(confirm("Delete message?")) db.ref('chats/'+child.key).remove(); };
+                div.innerHTML = `${d.sd ? '<span style="font-size:10px;">⏱ </span>' : ''}${d.text}<div class="meta"><span>${d.dev}</span> <span>${d.time}</span></div>`;
+                div.ondblclick = () => { if(confirm("Delete message?")) { vibrate(); db.ref('chats/'+child.key).remove(); }};
                 box.appendChild(div);
             });
+
+            if (!firstLoad && s.numChildren() > 0) {
+                const lastMsg = Object.values(s.val()).pop();
+                if (lastMsg.dev !== myDev) document.getElementById('notifSound').play().catch(()=>{});
+            }
+            firstLoad = false;
             box.scrollTop = box.scrollHeight;
         });
 
@@ -176,16 +171,13 @@
             const list = document.getElementById('user-list');
             list.innerHTML = "";
             s.forEach(u => {
-                list.innerHTML += `<div class="user-card">
-                    <span><b>${u.val().device}</b></span>
-                    <button onclick="db.ref('users/${u.key}').remove()" style="background:red; color:white; border:none; border-radius:6px; padding:6px 12px;">KICK</button>
-                </div>`;
+                list.innerHTML += `<div class="user-card"><span><b>${u.val().device}</b></span><button onclick="vibrate(); db.ref('users/${u.key}').remove()" style="background:red; color:white; border:none; border-radius:6px; padding:6px 12px;">KICK</button></div>`;
             });
         });
     }
 
-    function wipe() { if(confirm("DELETE EVERYTHING?")) db.ref('chats').remove(); }
-    setInterval(() => { if(document.getElementById('vault').style.display === 'flex') load(); }, 10000);
+    function wipe() { vibrate(); if(confirm("DELETE ALL HISTORY?")) db.ref('chats').remove(); }
+    setInterval(() => { if(document.getElementById('vault').style.display === 'flex') load(); }, 15000);
 </script>
 </body>
 </html>
