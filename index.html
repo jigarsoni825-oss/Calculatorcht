@@ -7,39 +7,42 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
-        :root { --bg: #000; --panel: #121212; --accent: #00a884; --text: #e9edef; --gray: #8696a0; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --bg: #000; --panel: #121212; --accent: #00a884; --text: #e9edef; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
 
-        /* --- CALCULATOR UI (FULL SCREEN) --- */
-        #calc { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #000; }
-        #display { flex: 1; display: flex; align-items: flex-end; justify-content: flex-end; font-size: 80px; font-weight: 300; padding-bottom: 20px; overflow: hidden; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .btn { height: 75px; border-radius: 50%; border: none; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #333; color: white; }
+        /* --- CALCULATOR --- */
+        #calc { height: 100vh; display: flex; flex-direction: column; padding: 20px; }
+        #display { flex: 1; display: flex; align-items: flex-end; justify-content: flex-end; font-size: 70px; padding-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .btn { height: 75px; border-radius: 50%; border: none; font-size: 26px; background: #333; color: white; cursor: pointer; }
         .btn.op { background: #ff9f0a; }
         .btn.action { background: #a5a5a5; color: black; }
-        .btn.zero { grid-column: span 2; border-radius: 40px; justify-content: flex-start; padding-left: 30px; }
 
-        /* --- CHAT UI (PRO LOOK) --- */
-        #vault { display: none; height: 100vh; flex-direction: column; background: #0b141a; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        header { padding: 12px 16px; background: #202c33; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.4); z-index: 10; }
-        #chat-box { flex: 1; overflow-y: auto; padding: 20px 15px; display: flex; flex-direction: column; gap: 8px; }
+        /* --- CHAT --- */
+        #vault { display: none; height: 100vh; flex-direction: column; background-color: #0b141a; }
+        header { padding: 10px 15px; background: #202c33; display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
         
-        .msg { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 15px; line-height: 1.4; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.2); }
-        .sent { align-self: flex-end; background: #005c4b; border-top-right-radius: 2px; }
-        .received { align-self: flex-start; background: #202c33; border-top-left-radius: 2px; }
+        .msg { padding: 8px 12px; border-radius: 10px; max-width: 80%; font-size: 15px; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.2); }
+        .sent { align-self: flex-end; background: #005c4b; }
+        .received { align-self: flex-start; background: #202c33; }
+        .timer-tag { font-size: 9px; color: #ffbc00; font-weight: bold; margin-bottom: 2px; display: block; }
+        .meta { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; display: flex; justify-content: space-between; }
+
+        /* --- CONTROLS --- */
+        #input-area { padding: 10px; background: #202c33; display: flex; flex-direction: column; gap: 8px; }
+        .row { display: flex; align-items: center; gap: 10px; }
+        #msgInput { flex: 1; background: #2a3942; border: none; padding: 12px; border-radius: 20px; color: white; }
+        .send-btn { background: var(--accent); border: none; width: 40px; height: 40px; border-radius: 50%; color: white; }
         
-        .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.5); }
-        .dev-info { font-style: italic; margin-right: 10px; }
+        /* Options Switch */
+        .opt-label { font-size: 11px; color: #8696a0; display: flex; align-items: center; gap: 5px; }
+        #sd-toggle { transform: scale(0.8); }
 
-        #input-area { padding: 10px; background: #202c33; display: flex; align-items: center; gap: 8px; }
-        #msgInput { flex: 1; background: #2a3942; border: none; padding: 12px 16px; border-radius: 24px; color: white; outline: none; font-size: 16px; }
-        .send-btn { background: var(--accent); border: none; width: 45px; height: 45px; border-radius: 50%; color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; }
-
-        /* --- ADMIN PANEL --- */
-        #admin { display: none; position: fixed; inset: 0; background: #111; z-index: 1000; padding: 25px; }
-        .user-card { background: #222; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
-        .btn-red { background: #ea4335; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; }
+        /* --- ADMIN --- */
+        #admin { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; }
+        .user-card { background: #1c1c1c; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -47,56 +50,42 @@
     <div id="calc">
         <div id="display">0</div>
         <div class="grid">
-            <button class="btn action" onclick="p('C')">AC</button>
-            <button class="btn action" onclick="p('DEL')">⌫</button>
-            <button class="btn action" onclick="p('%')">%</button>
-            <button class="btn op" onclick="p('/')">÷</button>
-            <button class="btn" onclick="p('7')">7</button>
-            <button class="btn" onclick="p('8')">8</button>
-            <button class="btn" onclick="p('9')">9</button>
-            <button class="btn op" onclick="p('*')">×</button>
-            <button class="btn" onclick="p('4')">4</button>
-            <button class="btn" onclick="p('5')">5</button>
-            <button class="btn" onclick="p('6')">6</button>
-            <button class="btn op" onclick="p('-')">−</button>
-            <button class="btn" onclick="p('1')">1</button>
-            <button class="btn" onclick="p('2')">2</button>
-            <button class="btn" onclick="p('3')">3</button>
-            <button class="btn op" onclick="p('+')">+</button>
-            <button class="btn zero" onclick="p('0')">0</button>
-            <button class="btn" onclick="p('.')">.</button>
-            <button class="btn op" onclick="p('=')">=</button>
+            <button class="btn action" onclick="p('C')">AC</button><button class="btn action" onclick="p('DEL')">⌫</button><button class="btn action" onclick="p('%')">%</button><button class="btn op" onclick="p('/')">÷</button>
+            <button class="btn" onclick="p('7')">7</button><button class="btn" onclick="p('8')">8</button><button class="btn" onclick="p('9')">9</button><button class="btn op" onclick="p('*')">×</button>
+            <button class="btn" onclick="p('4')">4</button><button class="btn" onclick="p('5')">5</button><button class="btn" onclick="p('6')">6</button><button class="btn op" onclick="p('-')">−</button>
+            <button class="btn" onclick="p('1')">1</button><button class="btn" onclick="p('2')">2</button><button class="btn" onclick="p('3')">3</button><button class="btn op" onclick="p('+')">+</button>
+            <button class="btn" onclick="p('0')" style="grid-column: span 2; border-radius:40px;">0</button><button class="btn" onclick="p('.')">.</button><button class="btn op" onclick="p('=')">=</button>
         </div>
     </div>
 
     <div id="vault">
         <header>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <div style="width:35px; height:35px; border-radius:50%; background:#666; display:flex; align-items:center; justify-content:center;">J</div>
-                <strong>Jarvis Stealth</strong>
+            <div onclick="document.getElementById('admin').style.display='block'">
+                <strong>Jarvis Vault</strong> <small style="color:var(--accent); font-size:10px;">● Online</small>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button onclick="document.getElementById('admin').style.display='block'" style="background:#3b4a54; border:none; color:white; padding:5px 10px; border-radius:4px;">Admin</button>
-                <button onclick="wipe()" style="background:#ea4335; border:none; color:white; padding:5px 10px; border-radius:4px;">Wipe</button>
-            </div>
+            <button onclick="wipe()" style="background:#ea4335; border:none; color:white; padding:5px 10px; border-radius:4px; font-size:12px;">Wipe All</button>
         </header>
         <div id="chat-box"></div>
         <div id="input-area">
-            <input type="text" id="msgInput" placeholder="Message..." autocomplete="off">
-            <button class="send-btn" onclick="send()">➤</button>
+            <div class="row">
+                <label class="opt-label">
+                    <input type="checkbox" id="sd-toggle"> Self-Destruct (60s)
+                </label>
+            </div>
+            <div class="row">
+                <input type="text" id="msgInput" placeholder="Type a secret message..." autocomplete="off">
+                <button class="send-btn" onclick="send()">➤</button>
+            </div>
         </div>
     </div>
 
     <div id="admin">
-        <h2 style="color:var(--accent)">System Admin</h2>
-        <p style="color:#888">Active Devices & Sessions</p>
-        <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+        <h3 style="color:var(--accent)">Admin: Device Control</h3>
         <div id="user-list"></div>
-        <button onclick="document.getElementById('admin').style.display='none'" style="width:100%; padding:15px; border:none; border-radius:10px; background:var(--accent); color:white; font-weight:bold; margin-top:20px;">Return to Chat</button>
+        <button onclick="document.getElementById('admin').style.display='none'" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:8px; margin-top:20px;">Back to Chat</button>
     </div>
 
 <script>
-    // FIREBASE INITIALIZATION
     const firebaseConfig = {
         apiKey: "AIzaSyBfb2z0c2faioPQZl9RKt_qUbBwoZV29-M",
         databaseURL: "https://calculator-cht-default-rtdb.firebaseio.com",
@@ -106,8 +95,7 @@
     const db = firebase.database();
 
     let cur = "";
-    // Professional device name detection
-    let myDevice = navigator.userAgent.includes("Android") ? navigator.userAgent.split(';')[2].split(')')[0].trim() : "Desktop";
+    let myDevice = navigator.userAgent.includes("Android") ? navigator.userAgent.split(';')[2].split(')')[0].trim() : "PC-User";
 
     function p(v) {
         const d = document.getElementById('display');
@@ -121,55 +109,77 @@
     function unlock() {
         document.getElementById('calc').style.display='none';
         document.getElementById('vault').style.display='flex';
-        // Auto-log device connection
-        db.ref('users/'+Date.now()).set({device: myDevice, time: Date.now()});
+        db.ref('users/'+Date.now()).set({device: myDevice, status: 'online'});
         load();
     }
 
     function send() {
         const inp = document.getElementById('msgInput');
+        const sdEnabled = document.getElementById('sd-toggle').checked;
         if(!inp.value.trim()) return;
-        db.ref('chats').push({text: inp.value, dev: myDevice, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})});
+        
+        const newMsg = {
+            text: inp.value,
+            dev: myDevice,
+            time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            selfDestruct: sdEnabled,
+            createdAt: Date.now()
+        };
+        
+        db.ref('chats').push(newMsg);
         inp.value = "";
     }
 
     function load() {
-        // Chat Real-time Load
         db.ref('chats').on('value', (s) => {
             const box = document.getElementById('chat-box');
             box.innerHTML = "";
+            const now = Date.now();
+            
             s.forEach(child => {
                 const d = child.val();
+                
+                // --- SELF DESTRUCT LOGIC ---
+                if (d.selfDestruct) {
+                    const age = (now - d.createdAt) / 1000;
+                    if (age > 60) {
+                        db.ref('chats/'+child.key).remove(); // Delete from DB
+                        return;
+                    }
+                }
+
                 const div = document.createElement('div');
                 div.className = `msg ${d.dev === myDevice ? 'sent' : 'received'}`;
-                div.innerHTML = `${d.text}<div class="meta"><span class="dev-info">${d.dev}</span><span>${d.time}</span></div>`;
-                // Long press to delete logic (simple click for web)
-                div.ondblclick = () => { if(confirm("Delete message for everyone?")) db.ref('chats/'+child.key).remove(); };
+                div.innerHTML = `
+                    ${d.selfDestruct ? '<span class="timer-tag">⏱ Self-Destructing</span>' : ''}
+                    ${d.text}
+                    <div class="meta"><span>${d.dev}</span> <span>${d.time}</span></div>
+                `;
+                
+                // Manual Delete on Double Click
+                div.ondblclick = () => { if(confirm("Delete message?")) db.ref('chats/'+child.key).remove(); };
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         });
 
-        // Admin User List
         db.ref('users').on('value', s => {
             const list = document.getElementById('user-list');
             list.innerHTML = "";
             s.forEach(u => {
-                const data = u.val();
                 list.innerHTML += `<div class="user-card">
-                    <div><b>${data.device}</b><br><small style="color:#666">Online</small></div>
-                    <button class="btn-red" onclick="db.ref('users/${u.key}').remove()">Kick</button>
+                    <span><b>${u.val().device}</b></span>
+                    <button onclick="db.ref('users/${u.key}').remove()" style="background:red; color:white; border:none; border-radius:4px; padding:4px 8px;">Kick</button>
                 </div>`;
             });
         });
     }
 
-    function wipe() { if(confirm("PERMANENT: Wipe all chats?")) db.ref('chats').remove(); }
+    function wipe() { if(confirm("Wipe everything for everyone?")) db.ref('chats').remove(); }
 
-    // Send on Enter key
-    document.getElementById('msgInput').addEventListener("keyup", function(event) {
-        if (event.key === "Enter") send();
-    });
+    // Auto-refresh for self-destruct timers
+    setInterval(() => { if(document.getElementById('vault').style.display === 'flex') load(); }, 5000);
 </script>
 </body>
 </html>
+
